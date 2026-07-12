@@ -1,1 +1,523 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Michael Mangihut Napitupulu - Linux Terminal Portfolio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ==================== INTEGRASI & REVISI CSS ==================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        :root {
+            --bg-main: #0a0c10;
+            --term-bg: #10141b;
+            --term-bar: #181d26;
+            --primary-green: #00ff66;
+            --dim-green: #00cc52;
+            --dark-green: rgba(0, 255, 102, 0.12);
+            --text-white: #e6edf3;
+            --text-gray: #8b949e;
+            --font-terminal: 'Fira Code', 'JetBrains Mono', monospace;
+        }
+
+        html { scroll-behavior: smooth; }
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-white);
+            font-family: var(--font-terminal);
+            overflow-x: hidden;
+        }
+
+        #matrixCanvas {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1; opacity: 0.04; pointer-events: none;
+        }
+
+        .main-container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 24px 60px 24px; }
+
+        .main-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px 0; border-bottom: 1px solid #1f242c; margin-bottom: 40px;
+        }
+        .main-header .logo { font-weight: 700; color: var(--primary-green); }
+        .nav-links a { color: var(--text-gray); text-decoration: none; margin-left: 20px; font-size: 14px; }
+        .nav-links a:hover { color: var(--primary-green); text-shadow: 0 0 8px var(--primary-green); }
+
+        /* TERMINAL INTERFACE CLASS */
+        .terminal-window {
+            background-color: var(--term-bg);
+            border: 1px solid #232a35;
+            border-radius: 6px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+            overflow: hidden; width: 100%;
+        }
+        .terminal-bar {
+            background-color: var(--term-bar); padding: 10px 16px;
+            display: flex; align-items: center; border-bottom: 1px solid #1f242c;
+        }
+        .term-buttons { display: flex; gap: 6px; }
+        .t-btn { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+        .c-btn { background-color: #ff5f56; }
+        .m-btn { background-color: #ffbd2e; }
+        .x-btn { background-color: #27c93f; }
+        .term-title { margin-left: 16px; font-size: 12px; color: var(--text-gray); }
+        .terminal-content { padding: 24px; }
+
+        .cmd-line { color: var(--text-gray); font-size: 14px; margin-bottom: 14px; }
+        .cmd-line .user { color: var(--primary-green); }
+        .cmd-line .path { color: #38bdf8; }
+
+        /* HERO SECTION REVISI PRESISI */
+        .hero-section { min-height: 65vh; display: flex; align-items: center; margin-bottom: 120px; }
+        
+        /* Menggunakan align-items: stretch agar tinggi container kanan & kiri sama rata */
+        .hero-content { display: flex; width: 100%; gap: 40px; align-items: stretch; flex-direction: row; }
+        
+        /* Kotak teks di kanan mempertahankan ukuran teks aslimu */
+        .hero-terminal { flex: 1.3; } 
+        
+        .name { font-size: 30px; font-weight: 700; color: var(--primary-green); text-shadow: 0 0 10px rgba(0,255,102,0.15); }
+        .name-strip { height: 2px; background-color: var(--primary-green); width: 100%; max-width: 450px; margin: 8px 0; box-shadow: 0 0 5px var(--primary-green); }
+        .title-sub { font-size: 14px; color: var(--text-white); font-weight: 600; margin-bottom: 25px; }
+        .description { color: #cbd5e1; font-size: 14px; line-height: 1.6; border-left: 3px solid var(--primary-green); padding-left: 12px; margin-bottom: 25px; }
+        .mt-20 { margin-top: 20px; }
+
+        .btn-group { display: flex; gap: 16px; flex-wrap: wrap; }
+        .btn-term { color: var(--primary-green); text-decoration: none; border: 1px solid var(--primary-green); padding: 10px 18px; border-radius: 4px; font-size: 13px; transition: all 0.2s ease; }
+        .btn-term:hover { background-color: var(--dark-green); box-shadow: 0 0 15px rgba(0, 255, 102, 0.3); transform: translateY(-2px); }
+
+        /* REVISI UKURAN FOTO: Mengikuti tinggi total teks di sebelah kanan secara simetris */
+        .hero-photo-container { 
+            flex: 0.7; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+        }
+        .photo-wrapper { 
+            position: relative; 
+            height: 100%;          /* Mengisi penuh tinggi flexbox container */
+            aspect-ratio: 1 / 1;    /* Mengunci rasio 1:1 agar lingkaran tidak berubah bentuk lonjong */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .profile-photo { 
+            width: 86%; 
+            height: 86%; 
+            border-radius: 50%; 
+            object-fit: cover; 
+            z-index: 2; 
+            position: relative; 
+        }
+        .rotating-dashed-border { 
+            position: absolute; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            border: 2px dashed var(--primary-green); 
+            border-radius: 50%; 
+            animation: spin 16s linear infinite; 
+            z-index: 1; 
+        }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* ABOUT ME */
+        .about-section { margin-bottom: 120px; }
+        .about-highlight { font-size: 15px; font-weight: 700; color: #ffffff; line-height: 1.6; margin-bottom: 16px; border-bottom: 1px dashed #232a35; padding-bottom: 16px; }
+        .about-detail { color: #cbd5e1; font-size: 14px; line-height: 1.6; margin-bottom: 25px; }
+
+        /* GALLERY: Animasi Bergerak Kesamping Otomatis (Infinite Loop Carousel) */
+        .gallery-wrapper { 
+            width: 100%; 
+            overflow: hidden; 
+            padding: 10px 0; 
+            position: relative;
+        }
+        .gallery-slider { 
+            display: flex; 
+            gap: 16px; 
+            width: max-content; 
+            animation: scrollGallery 25s linear infinite; 
+        }
+        .gallery-slider:hover {
+            animation-play-state: paused; 
+        }
+        .gallery-card { width: 200px; background-color: var(--term-bar); border: 1px solid #232a35; border-radius: 4px; padding: 8px; transition: all 0.3s ease; }
+        .gallery-card img { width: 100%; height: 120px; object-fit: cover; }
+        .gallery-caption { font-size: 11px; color: var(--text-gray); text-align: center; margin-top: 6px; }
+        .gallery-card:hover { transform: translateY(-4px); border-color: var(--primary-green); }
+
+        @keyframes scrollGallery {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(calc(-216px * 5)); } 
+        }
+
+        /* KEAHLIAN TEKNIS Grid */
+        .skills-section { margin-bottom: 120px; }
+        .section-label { font-size: 16px; font-weight: 700; color: var(--primary-green); margin-bottom: 20px; }
+        .skills-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+        .skill-box:hover { border-color: var(--primary-green); }
+        .skill-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+        .skill-icon { font-size: 22px; color: var(--primary-green); }
+        .skill-box h3 { font-size: 15px; color: #ffffff; }
+        .skill-desc { font-size: 13px; color: #cbd5e1; line-height: 1.5; }
+
+        /* SERTIFIKASI */
+        .cert-section { margin-bottom: 120px; }
+        .cert-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+        .cert-card { background-color: var(--term-bg); border: 1px solid #232a35; border-radius: 6px; overflow: hidden; position: relative; transition: all 0.3s ease; }
+        .cert-badge { position: absolute; top: 10px; right: 10px; background-color: rgba(0, 255, 102, 0.15); border: 1px solid var(--primary-green); color: var(--primary-green); font-size: 10px; padding: 2px 6px; border-radius: 4px; }
+        .cert-img-container { width: 100%; height: 140px; overflow: hidden; }
+        .cert-img-container img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+        .cert-info { padding: 14px; }
+        .cert-info h3 { font-size: 13px; color: #ffffff; margin-bottom: 10px; }
+        .cert-link { font-size: 12px; color: var(--primary-green); text-decoration: none; }
+        .cert-card:hover { transform: translateY(-5px); border-color: var(--primary-green); }
+        .cert-card:hover .cert-img-container img { transform: scale(1.06); }
+
+        /* TECHNOLOGY STACK & TOOLS */
+        .tools-section { margin-bottom: 140px; }
+        .tools-container { background-color: var(--term-bg); border: 1px solid #232a35; border-radius: 6px; padding: 24px; }
+        .tools-category { margin-bottom: 20px; }
+        .category-name { font-size: 12px; color: var(--text-gray); margin-bottom: 10px; }
+        .tags-flex { display: flex; flex-wrap: wrap; gap: 12px; }
+
+        .hot-tag {
+            position: relative; background-color: #0b0d13; border: 1px solid #ff4500;
+            padding: 8px 16px; border-radius: 4px; font-size: 13px; font-weight: 600;
+            color: #ffaa66; overflow: hidden; cursor: default; transition: all 0.3s ease;
+            box-shadow: 0 0 8px rgba(255, 69, 0, 0.15);
+        }
+        .hot-tag .fire-effect {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 3px;
+            background: linear-gradient(0deg, #ff4500, #ffaa00, transparent); opacity: 0.7;
+        }
+        .hot-tag:hover {
+            color: #ffffff; border-color: #ffaa00;
+            box-shadow: 0 0 18px rgba(255, 69, 0, 0.5), inset 0 0 8px rgba(255, 69, 0, 0.3);
+            transform: translateY(-2px);
+        }
+        .hot-tag:hover .fire-effect {
+            height: 100%; z-index: -1; opacity: 0.3;
+            animation: flicker 0.5s ease-in-out infinite alternate;
+        }
+        @keyframes flicker {
+            0% { background: linear-gradient(0deg, #ff4500, #ffaa00, transparent); }
+            100% { background: linear-gradient(0deg, #ff1a00, #ffdd00, transparent); }
+        }
+
+        /* CONTACT */
+        .contact-section { margin-bottom: 60px; }
+        .contact-terminal { max-width: 650px; margin: 0 auto; }
+        .contact-grid { margin: 16px 0; display: flex; flex-direction: column; gap: 14px; }
+        .contact-row { display: flex; align-items: center; gap: 14px; }
+        .c-icon { width: 32px; height: 32px; background-color: var(--dark-green); border: 1px solid var(--primary-green); color: var(--primary-green); border-radius: 4px; display: flex; justify-content: center; align-items: center; font-size: 12px; }
+        .c-key { color: #f43f5e; }
+        .c-val { color: var(--primary-green); }
+        .footer-links { margin-top: 20px; border-top: 1px dashed #232a35; padding-top: 16px; display: flex; justify-content: center; gap: 24px; }
+        .footer-links a { color: var(--text-gray); text-decoration: none; font-size: 13px; }
+        .footer-links a:hover { color: var(--primary-green); }
+
+        @media (max-width: 768px) {
+            .hero-content { flex-direction: column-reverse; } 
+            .photo-wrapper { height: 220px; width: 220px; }
+            .hero-photo-container { margin-bottom: 20px; }
+            .skills-grid { grid-template-columns: 1fr; }
+            .cert-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BACKGROUND MATRIX EFFECT -->
+    <canvas id="matrixCanvas"></canvas>
+
+    <div class="main-container">
+
+        <!-- HEADER UTAMA PORTFOLIO -->
+        <header class="main-header">
+            <div class="logo">
+                <span class="prompt-symbol">#</span> systemctl start portfolio
+            </div>
+            <nav class="nav-links">
+                <a href="#home">[01_Home]</a>
+                <a href="#about">[02_About]</a>
+                <a href="#skills">[03_Skills]</a>
+                <a href="#certifications">[04_Certs]</a>
+                <a href="#tools">[05_Tools]</a>
+                <a href="#contact">[06_Contact]</a>
+            </nav>
+        </header>
+
+        <!-- SECTION 1: HERO (HOME) -->
+        <section id="home" class="hero-section">
+            <div class="hero-content">
+                
+                <!-- FOTO DI SEBELAH KIRI (TINGGI SAMA RATA DENGAN TEKS DI KANAN) -->
+                <div class="hero-photo-container">
+                    <div class="photo-wrapper">
+                        <img src="profile image.png" alt="Michael Mangihut Napitupulu" class="profile-photo" onerror="">
+                        <div class="rotating-dashed-border"></div>
+                    </div>
+                </div>
+
+                <!-- KOTAK TERMINAL TEKS DI SEBELAH KANAN -->
+                <div class="terminal-window hero-terminal">
+                    <div class="terminal-bar">
+                        <div class="term-buttons">
+                            <span class="t-btn c-btn"></span>
+                            <span class="t-btn m-btn"></span>
+                            <span class="t-btn x-btn"></span>
+                        </div>
+                        <div class="term-title">michael@admin-core:~</div>
+                    </div>
+                    <div class="terminal-content">
+                        <div class="cmd-line"><span class="user">michael@admin-core</span>:<span class="path">~</span>$ whoami</div>
+                        <h1 class="name">Michael Mangihut Napitupulu</h1>
+                        <div class="name-strip"></div>
+                        <div class="title-sub">Network Engineer - Linux Administrator - IT Support</div>
+                        
+                        <div class="cmd-line mt-20"><span class="user">michael@admin-core</span>:<span class="path">~</span>$ cat intro.txt</div>
+                        <p class="description">
+                            Saya siswa Teknik Jaringan Komputer dan Telekomunikasi di SMK Wikrama Bogor, yang berfokus pada Jaringan, Infrastruktur Jaringan dan Linux System Administration.
+                        </p>
+                        
+                        <div class="btn-group">
+                            <a href="#skills" class="btn-term"><span class="btn-prompt">></span> ./cat/proyek.sh</a>
+                            <a href="https://docs.google.com/document/d/1i6xCsHOEcSjow9NIAY0vdkrzPSQbNv8P/edit" class="btn-term"><span class="btn-prompt">></span> ./cat/cv.sh</a>
+                            <a href="#contact" class="btn-term"><span class="btn-prompt">></span> ./ping saya</a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- SECTION 2: ABOUT ME -->
+        <section id="about" class="about-section">
+            <div class="terminal-window full-window">
+                <div class="terminal-bar">
+                    <div class="term-buttons">
+                        <span class="t-btn c-btn"></span>
+                        <span class="t-btn m-btn"></span>
+                        <span class="t-btn x-btn"></span>
+                    </div>
+                    <div class="term-title">michael@admin-core:~/about_me</div>
+                </div>
+                <div class="terminal-content">
+                    <div class="cmd-line"><span class="user">michael@admin-core</span>:<span class="path">~/about_me</span>$ ./read_profile.py</div>
+                    <p class="about-highlight">
+                        Saya adalah siswa Teknik Jaringan Komputer dan Telekomunikasi di SMK Wikrama Bogor. Memiliki ketertarikan kuat pada dunia Internet (Cable FO, Mikrotik RouterOS, SwitchOS, ODP), Sistem Linux (Debian, Ubuntu, Windows Server.)
+                    </p>
+                    <p class="about-detail">
+                        Berpengalaman dalam merancang infrastruktur jaringan internet skala RT/RW (RT/RW Net), merancang server Linux (BIND9, Samba Server, DNS Server, FTP, Remote SSH, IPTABLES, EMAIL ROUNDCUBE) serta merancang DataBase server (MySql, PHPMyAdmin, MariaDB). Monitoring keamanan jaringan (OPNSENSE & WAZUH), Membuat Server Cloud penyimpanan pribadi dari laptop bekas menggunakan Ubuntu, Nextcloud, NetData, Tailscale.
+                    </p>
+
+                    <div class="cmd-line"><span class="user">michael@admin-core</span>:<span class="path">~/about_me</span>$ ls -l ./gallery/</div>
+                    <div class="gallery-wrapper">
+                        <div class="gallery-slider">
+                            <div class="gallery-card"><img src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=400&q=80"><div class="gallery-caption">rt-rw-net-setup.jpg</div></div>
+                            <div class="gallery-card"><img src="https://images.unsplash.com/photo-1600132806370-bf17e65e942f?auto=format&fit=crop&w=400&q=80"><div class="gallery-caption">linux-config.jpg</div></div>
+                            <div class="gallery-card"><img src="https://images.unsplash.com/photo-1544256718-3bcf237f3974?auto=format&fit=crop&w=400&q=80"><div class="gallery-caption">fo-splicing.jpg</div></div>
+                            <div class="gallery-card"><img src="Pengalaman image.jpg"><div class="gallery-caption">Pemasangan Internet yang berada diwarung</div></div>
+                            <div class="gallery-card"><img src="https://images.unsplash.com/photo-1510511459019-5dda7724fd87?auto=format&fit=crop&w=400&q=80"><div class="gallery-caption">home-cloud.jpg</div></div>
+                            
+                            <!-- DUPLIKAT SLIDER UNTUK LOOPING SEMPURNA -->
+                            <div class="gallery-card"><img src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=400&q=80"><div class="gallery-caption">rt-rw-net-setup.jpg</div></div>
+                            <div class="gallery-card"><img src="https://images.unsplash.com/photo-1600132806370-bf17e65e942f?auto=format&fit=crop&w=400&q=80"><div class="gallery-caption">linux-config.jpg</div></div>
+                            <div class="gallery-card"><img src="https://images.unsplash.com/photo-1544256718-3bcf237f3974?auto=format&fit=crop&w=400&q=80"><div class="gallery-caption">fo-splicing.jpg</div></div>
+                            <div class="gallery-card"><img src="https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=400&q=80"><div class="gallery-caption">wazuh-monitor.jpg</div></div>
+                            <div class="gallery-card"><img src="https://images.unsplash.com/photo-1510511459019-5dda7724fd87?auto=format&fit=crop&w=400&q=80"><div class="gallery-caption">home-cloud.jpg</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: KEAHLIAN TEKNIS -->
+        <section id="skills" class="skills-section">
+            <div class="section-label">[ KEAHLIAN TEKNIS ]</div>
+            <div class="skills-grid">
+                <div class="terminal-window skill-box">
+                    <div class="terminal-bar"><div class="term-buttons"><span class="t-btn c-btn"></span></div><div class="term-title">tty1 - Linux Administration</div></div>
+                    <div class="terminal-content">
+                        <div class="skill-header"><i class="fa-brands fa-linux skill-icon"></i><h3>Linux Administration</h3></div>
+                        <p class="skill-desc">Administrasi sistem Linux meliputi manajemen user, permission, systemd service, firewall, serta konfigurasi network interface pada Ubuntu, Debian.</p>
+                    </div>
+                </div>
+                <div class="terminal-window skill-box">
+                    <div class="terminal-bar"><div class="term-buttons"><span class="t-btn c-btn"></span></div><div class="term-title">tty2 - Network Infrastructure</div></div>
+                    <div class="terminal-content">
+                        <div class="skill-header"><i class="fa-solid fa-network-wired skill-icon"></i><h3>Network Infrastructure</h3></div>
+                        <p class="skill-desc">Konfigurasi router MikroTik, VLAN, NAT, QoS, serta implementasi jaringan fiber optik dan OLT untuk kebutuhan ISP, enterprise, maupun RT/RW Net.</p>
+                    </div>
+                </div>
+                <div class="terminal-window skill-box">
+                    <div class="terminal-bar"><div class="term-buttons"><span class="t-btn c-btn"></span></div><div class="term-title">tty3 - Database Management</div></div>
+                    <div class="terminal-content">
+                        <div class="skill-header"><i class="fa-solid fa-database skill-icon"></i><h3>Database Management</h3></div>
+                        <p class="skill-desc">Instalasi, konfigurasi, dan pengelolaan database MariaDB dan MySQL meliputi skema backup, restore, pengaturan user privilege, serta optimasi query dasar.</p>
+                    </div>
+                </div>
+                <div class="terminal-window skill-box">
+                    <div class="terminal-bar"><div class="term-buttons"><span class="t-btn c-btn"></span></div><div class="term-title">tty4 - Cloud & SysAdmin</div></div>
+                    <div class="terminal-content">
+                        <div class="skill-header"><i class="fa-solid fa-server skill-icon"></i><h3>Cloud & SysAdmin</h3></div>
+                        <p class="skill-desc">Deployment server cloud mandiri, menggunakan NextCloud, Monitoring jarak jauh dengan bantuan TailScale, dan monitoring performa server menggunakan NetData.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: SERTIFIKASI -->
+        <section id="certifications" class="cert-section">
+            <div class="section-label">[ SERTIFIKASI KOMPETENSI ]</div>
+            <div class="cert-grid">
+                <div class="cert-card">
+                    <div class="cert-badge"><i class="fa-solid fa-shield-halved"></i> Verified</div>
+                    <div class="cert-img-container"><img src="Network Fundamental.jpg"></div>
+                    <div class="cert-info"><h3>Network Fundamental</h3><a href="https://drive.google.com/drive/u/1/folders/1aoaVpcKap-6NXzo73cUM4haZ53Z5Sq7J" class="cert-link">[ Buka Dokumen <i class="fa-solid fa-external-link"></i> ]</a></div>
+                </div>
+                <div class="cert-card">
+                    <div class="cert-badge"><i class="fa-solid fa-shield-halved"></i> Verified</div>
+                    <div class="cert-img-container"><img src="Linux Fundamental.jpg"></div>
+                    <div class="cert-info"><h3>Linux Fundamental</h3><a href="https://drive.google.com/drive/u/1/folders/1aoaVpcKap-6NXzo73cUM4haZ53Z5Sq7J" class="cert-link">[ Buka Dokumen <i class="fa-solid fa-external-link"></i> ]</a></div>
+                </div>
+                <div class="cert-card">
+                    <div class="cert-badge"><i class="fa-solid fa-shield-halved"></i> Verified</div>
+                    <div class="cert-img-container"><img src="https://images.unsplash.com/photo-1589330694653-ded6df03f754?auto=format&fit=crop&w=400&q=80"></div>
+                    <div class="cert-info"><h3>Virtual Machine Fundamental</h3><a href="#" class="cert-link">[ Buka Dokumen <i class="fa-solid fa-external-link"></i> ]</a></div>
+                </div>
+                <div class="cert-card">
+                    <div class="cert-badge"><i class="fa-solid fa-shield-halved"></i> Verified</div>
+                    <div class="cert-img-container"><img src="https://images.unsplash.com/photo-1589330694653-ded6df03f754?auto=format&fit=crop&w=400&q=80"></div>
+                    <div class="cert-info"><h3>System Admin I (RH124)</h3><a href="#" class="cert-link">[ Buka Dokumen <i class="fa-solid fa-external-link"></i> ]</a></div>
+                </div>
+                <div class="cert-card">
+                    <div class="cert-badge"><i class="fa-solid fa-shield-halved"></i> Verified</div>
+                    <div class="cert-img-container"><img src="https://images.unsplash.com/photo-1589330694653-ded6df03f754?auto=format&fit=crop&w=400&q=80"></div>
+                    <div class="cert-info"><h3>System Administration II (RH134)</h3><a href="#" class="cert-link">[ Buka Dokumen <i class="fa-solid fa-external-link"></i> ]</a></div>
+                </div>
+                <div class="cert-card">
+                    <div class="cert-badge"><i class="fa-solid fa-shield-halved"></i> Verified</div>
+                    <div class="cert-img-container"><img src="https://images.unsplash.com/photo-1589330694653-ded6df03f754?auto=format&fit=crop&w=400&q=80"></div>
+                    <div class="cert-info"><h3>Cyber Security Tech</h3><a href="#" class="cert-link">[ Buka Dokumen <i class="fa-solid fa-external-link"></i> ]</a></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5: TOOLS -->
+        <section id="tools" class="tools-section">
+            <div class="section-label">[ TECHNOLOGY STACK & TOOLS ]</div>
+            <div class="tools-container">
+                <div class="tools-category">
+                    <div class="category-name"><i class="fa-solid fa-network-wired"></i> NETWORKING</div>
+                    <div class="tags-flex">
+                        <div class="hot-tag">MikroTik<div class="fire-effect"></div></div>
+                        <div class="hot-tag">SWITCH<div class="fire-effect"></div></div>
+                        <div class="hot-tag">Cable FO<div class="fire-effect"></div></div>
+                        <div class="hot-tag">OLT<div class="fire-effect"></div></div>
+                        <div class="hot-tag">IPCAM CCTV<div class="fire-effect"></div></div>
+                    </div>
+                </div>
+                <div class="tools-category">
+                    <div class="category-name"><i class="fa-brands fa-linux"></i> LINUX SYSTEM</div>
+                    <div class="tags-flex">
+                        <div class="hot-tag">Debian<div class="fire-effect"></div></div>
+                        <div class="hot-tag">Ubuntu<div class="fire-effect"></div></div>
+                        <div class="hot-tag">Windows Server<div class="fire-effect"></div></div>
+                    </div>
+                </div>
+                <div class="tools-category">
+                    <div class="category-name"><i class="fa-solid fa-globe"></i> WEB & DATABASE</div>
+                    <div class="tags-flex">
+                        <div class="hot-tag">Nginx<div class="fire-effect"></div></div>
+                        <div class="hot-tag">Apache<div class="fire-effect"></div></div>
+                        <div class="hot-tag">MySQL<div class="fire-effect"></div></div>
+                        <div class="hot-tag">MariaDB<div class="fire-effect"></div></div>
+                    </div>
+                </div>
+                <div class="tools-category">
+                    <div class="category-name"><i class="fa-solid fa-shield-virus"></i> CLOUD & MONITORING</div>
+                    <div class="tags-flex">
+                        <div class="hot-tag">NextCloud<div class="fire-effect"></div></div>
+                        <div class="hot-tag">Netdata<div class="fire-effect"></div></div>
+                        <div class="hot-tag">TailScale<div class="fire-effect"></div></div>
+                        <div class="hot-tag">WAZUH<div class="fire-effect"></div></div>
+                        <div class="hot-tag">OPNSENSE<div class="fire-effect"></div></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 6: CONTACT -->
+        <section id="contact" class="contact-section">
+            <div class="section-label">[ HUBUNGI SAYA ]</div>
+            <div class="terminal-window contact-terminal">
+                <div class="terminal-bar">
+                    <div class="term-buttons"><span class="t-btn c-btn"></span></div>
+                    <div class="term-title">michael@admin-core:~/contact</div>
+                </div>
+                <div class="terminal-content">
+                    <div class="cmd-line"><span class="user">michael@admin-core</span>:<span class="path">~/contact</span>$ cat info.env</div>
+                    <div class="contact-grid">
+                        <div class="contact-row"><div class="c-icon"><i class="fa-solid fa-envelope"></i></div><div class="c-text"><span class="c-key">EMAIL=</span><span class="c-val">"michaelmangihut.g.napitupulu@gmail.com"</span></div></div>
+                        <div class="contact-row"><div class="c-icon"><i class="fa-solid fa-phone"></i></div><div class="c-text"><span class="c-key">NUMBER=</span><span class="c-val">"+62 858-9297-8584"</span></div></div>
+                        <div class="contact-row"><div class="c-icon"><i class="fa-solid fa-location-dot"></i></div><div class="c-text"><span class="c-key">LOCATION=</span><span class="c-val">"Kota Bogor, Jawa Barat"</span></div></div>
+                    </div>
+                    <div class="footer-links">
+                        <a href="https://github.com" target="_blank"><i class="fa-brands fa-github"></i> GitHub</a>
+                        <a href="https://linkedin.com" target="_blank"><i class="fa-brands fa-linkedin"></i> LinkedIn</a>
+                        <a href="https://instagram.com" target="_blank"><i class="fa-brands fa-instagram"></i> Instagram</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- JAVASCRIPT MATRIX EFFECT -->
+    <script>
+        const canvas = document.getElementById('matrixCanvas');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            const chars = "0101010101SYSTEM_ERROR_ADMIN_ACCESS_GRANTED_";
+            const charArr = chars.split("");
+            const fontSize = 14;
+            const columns = canvas.width / fontSize;
+            const drops = Array(Math.floor(columns)).fill(1);
+
+            function drawMatrix() {
+                ctx.fillStyle = 'rgba(10, 12, 16, 0.05)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#00ff66';
+                ctx.font = fontSize + 'px monospace';
+
+                for (let i = 0; i < drops.length; i++) {
+                    const text = charArr[Math.floor(Math.random() * charArr.length)];
+                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                        drops[i] = 0;
+                    }
+                    drops[i]++;
+                }
+            }
+            setInterval(drawMatrix, 35);
+        }
+    </script>
+</body>
+</html>
